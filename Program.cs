@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,14 +23,29 @@ app.MapDelete("/messages/{id}", async (Guid id, MessageDb db) =>
     {
         return Results.NotFound(new { Message = "Message not found" });
     }
-    
+
     db.Messages.Remove(message);
     await db.SaveChangesAsync();
 
     return Results.Ok(message);
 });
 
-app.MapPost("/message", async (MessageBody messageBody, MessageDb db) =>
+app.MapPut("/messages/{id}", async (Guid id, MessageBody messageBody, MessageDb db) =>
+{
+    var message = await db.Messages.FindAsync(id);
+
+    if (message == null)
+    {
+        return Results.NotFound(new { Message = "Message not found" });
+    }
+
+    message.Content = messageBody.Content;
+    await db.SaveChangesAsync();
+
+    return Results.Ok(message);
+});
+
+app.MapPost("/messages", async (MessageBody messageBody, MessageDb db) =>
 {
     var message = new Message
     {
@@ -42,5 +58,7 @@ app.MapPost("/message", async (MessageBody messageBody, MessageDb db) =>
 
     return Results.Ok(message);
 });
+
+
 
 app.Run();
