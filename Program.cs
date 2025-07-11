@@ -1,13 +1,36 @@
-using System.Reflection.Metadata.Ecma335;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 
+var webSocketConnections = new List<WebSocket>();
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MessageDb>(opt => opt.UseInMemoryDatabase("messages"));
 var app = builder.Build();
 
+var webSocketOptions = new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(120)
+};
+
+app.UseWebSockets(webSocketOptions);
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/health-check", () => Results.Ok("Healty"));
+
+app.Map("/ws", async (HttpContext context) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        webSocketConnections.Add(webSocket);
+
+        await HandleWebSocketConnection(webSocket);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+});
 
 app.MapGet("/messages", async (MessageDb db) =>
 {
@@ -27,6 +50,8 @@ app.MapDelete("/messages/{id}", async (Guid id, MessageDb db) =>
     db.Messages.Remove(message);
     await db.SaveChangesAsync();
 
+    await BroadcastMessageAsync(new { Action = "Deleted", Message = message });
+
     return Results.Ok(message);
 });
 
@@ -42,6 +67,8 @@ app.MapPut("/messages/{id}", async (Guid id, MessageBody messageBody, MessageDb 
     message.Content = messageBody.Content;
     await db.SaveChangesAsync();
 
+    await BroadcastMessageAsync(new { Action = "Edited", Message = message });
+
     return Results.Ok(message);
 });
 
@@ -56,9 +83,43 @@ app.MapPost("/messages", async (MessageBody messageBody, MessageDb db) =>
     db.Messages.Add(message);
     await db.SaveChangesAsync();
 
+    await BroadcastMessageAsync(new { Action = "Created", Message = message });
+
     return Results.Ok(message);
 });
 
 
+async Task HandleWebSocketConnection(WebSocket webSocket)
+{
+    var buffer = new byte[1024 * 4];
+    while (webSocket.State == WebSocketState.Open)
+    {
+        var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+        if (result.MessageType == WebSocketMessageType.Close)
+        {
+            webSocketConnections.Remove(webSocket);
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by client", CancellationToken.None);
+        }
+    }
+}
+
+async Task BroadcastMessageAsync(object message)
+{
+    var messageJson = JsonSerializer.Serialize(message);
+    var messageBytes = Encoding.UTF8.GetBytes(messageJson);
+
+    foreach (var socket in webSocketConnections.ToList())
+    {
+        if (socket.State == WebSocketState.Open)
+        {
+            await socket.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+        else
+        {
+            webSocketConnections.Remove(socket);
+        }
+    }
+}
 
 app.Run();
