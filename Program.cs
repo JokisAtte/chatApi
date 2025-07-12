@@ -15,6 +15,17 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+var jsonSerializerOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+};
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
 var app = builder.Build();
 
 var webSocketOptions = new WebSocketOptions
@@ -117,7 +128,9 @@ async Task HandleWebSocketConnection(WebSocket webSocket)
 
 async Task BroadcastMessageAsync(object message)
 {
-    var messageJson = JsonSerializer.Serialize(message);
+    var messageJson = JsonSerializer.Serialize(message, new JsonSerializerOptions{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+});
     var messageBytes = Encoding.UTF8.GetBytes(messageJson);
 
     foreach (var socket in webSocketConnections.ToList())
