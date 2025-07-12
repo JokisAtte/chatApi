@@ -1,16 +1,16 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'global-docker.pkg.dev/crafty-isotope-354114/JokisAtte/chatApi:$COMMIT_SHA', '.']
+  args: ['build', '-t', 'europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA', '.']
   id: Build
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'global-docker.pkg.dev/crafty-isotope-354114/JokisAtte/chatApi:$COMMIT_SHA']
+  args: ['push', 'europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA']
   id: Push
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args: ['gcloud', 'run', 'deploy', 'my-csharp-service',
-         '--image', 'global-docker.pkg.dev/crafty-isotope-354114/JokisAtte/chatApi:$COMMIT_SHA',
-         '--region', 'us-central1',
+         '--image', 'europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA',
+         '--region', 'europe-west1',
          '--platform', 'managed',
          '--allow-unauthenticated']
   id: Deploy
 images:
-- global-docker.pkg.dev/crafty-isotope-354114/JokisAtte/chatApi:$COMMIT_SHA
+- europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA
