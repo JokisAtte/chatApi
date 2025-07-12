@@ -6,7 +6,7 @@ steps:
   args: ['push', 'europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA']
   id: Push
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'run', 'deploy', 'my-csharp-service',
+  args: ['gcloud', 'run', 'deploy', 'chat-api',
          '--image', 'europe-west1-docker.pkg.dev/crafty-isotope-354114/chat-api/chat-api:$COMMIT_SHA',
          '--region', 'europe-west1',
          '--platform', 'managed',
