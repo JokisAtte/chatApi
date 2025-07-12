@@ -7,5 +7,7 @@ public class Message : MessageBody
 public class MessageBody
 {
     public string Content { get; set; }
-    public string SenderName {get; set; }
+    public string SenderName { get; set; }
+    
+    public DateTime Timestamp { get; set; }
 }

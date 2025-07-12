@@ -6,6 +6,15 @@ using System.Text.Json;
 var webSocketConnections = new List<WebSocket>();
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MessageDb>(opt => opt.UseInMemoryDatabase("messages"));
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
 
 var webSocketOptions = new WebSocketOptions
@@ -13,6 +22,7 @@ var webSocketOptions = new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(120)
 };
 
+app.UseCors();
 app.UseWebSockets(webSocketOptions);
 app.MapGet("/", () => "Hello World!");
 app.MapGet("/health-check", () => Results.Ok("Healty"));
@@ -77,7 +87,8 @@ app.MapPost("/messages", async (MessageBody messageBody, MessageDb db) =>
     var message = new Message
     {
         Content = messageBody.Content,
-        SenderName = messageBody.SenderName
+        SenderName = messageBody.SenderName,
+        Timestamp = messageBody.Timestamp
     };
 
     db.Messages.Add(message);
