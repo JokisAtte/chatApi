@@ -1,16 +1,16 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/chatApi/chatApi:$COMMIT_SHA', '.']
+  args: ['build', '-t', 'global-docker.pkg.dev/crafty-isotope-354114/chatApi/chatApi:$COMMIT_SHA', '.']
   id: Build
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/chatApi/chatApi:$COMMIT_SHA']
+  args: ['push', 'global-docker.pkg.dev/crafty-isotope-354114/chatApi/chatApi:$COMMIT_SHA']
   id: Push
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args: ['gcloud', 'run', 'deploy', 'my-csharp-service',
-         '--image', 'us-central1-docker.pkg.dev/$PROJECT_ID/chatApi/chatApi:$COMMIT_SHA',
+         '--image', 'global-docker.pkg.dev/crafty-isotope-354114/chatApi/chatApi:$COMMIT_SHA',
          '--region', 'us-central1',
          '--platform', 'managed',
          '--allow-unauthenticated']
   id: Deploy
 images:
-- us-central1-docker.pkg.dev/$PROJECT_ID/chatApi/chatApi:$COMMIT_SHA
+- global-docker.pkg.dev/crafty-isotope-354114/chatApi/chatApi:$COMMIT_SHA
